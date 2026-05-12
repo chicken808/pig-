@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA 2K26 - Web Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #0a0e27;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .main-menu {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1f3a 0%, #16213e 100%);
+            text-align: center;
+        }
+
+        .menu-logo {
+            font-size: 4em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+        }
+
+        .menu-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            max-width: 900px;
+            margin: 40px 20px;
+        }
+
+        .menu-btn {
+            padding: 20px 30px;
+            font-size: 1.1em;
+            border: 2px solid #FFD700;
+            background: rgba(255, 215, 0, 0.1);
+            color: #FFD700;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .menu-btn:hover {
+            background: rgba(255, 215, 0, 0.3);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .game-container {
+            display: none;
+            min-height: 100vh;
+            background: #0a0e27;
+        }
+
+        .hud {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-bottom: 2px solid #FFD700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            flex: 1;
+            text-align: center;
+        }
+
+        .team-info {
+            flex: 1;
+        }
+
+        .team-info h3 {
+            color: #FFD700;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .score {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .game-stats {
+            flex: 1;
+            display: flex;
+            gap: 20px;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .stat-display {
+            text-align: right;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #aaa;
+        }
+
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: linear-gradient(180deg, #0a0e27 0%, #16213e 100%);
+            flex: 1;
+        }
+
+        .game-canvas {
+            background: linear-gradient(180deg, #87CEEB 0%, #90EE90 50%, #228B22 100%);
+            border: 3px solid #FFD700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            border-radius: 10px;
+        }
+
+        .menu-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .menu-panel.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-header {
+            background: #FFD700;
+            color: #000;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .menu-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #ff6b6b;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .builder-section {
+            background: rgba(255, 215, 0, 0.1);
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid #FFD700;
+            border-radius: 5px;
+        }
+
+        .builder-input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #FFD700;
+            color: #fff;
+            border-radius: 5px;
+        }
+
+        .stat-bar {
+            margin: 10px 0;
+        }
+
+        .stat-label-inline {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .stat-bar-fill {
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+            height: 20px;
+            border-radius: 3px;
+            border: 1px solid #FFD700;
+        }
+
+        .badge-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .badge {
+            background: rgba(255, 215, 0, 0.2);
+            border: 2px solid #FFD700;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .badge:hover {
+            background: rgba(255, 215, 0, 0.4);
+            transform: scale(1.05);
+        }
+
+        .badge.bronze {
+            border-color: #CD7F32;
+            color: #CD7F32;
+        }
+
+        .badge.silver {
+            border-color: #C0C0C0;
+            color: #C0C0C0;
+        }
+
+        .badge.gold {
+            border-color: #FFD700;
+            color: #FFD700;
+        }
+
+        .badge.hof {
+            border-color: #FF0000;
+            color: #FF0000;
+            background: rgba(255, 0, 0, 0.2);
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .team-card {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid #FFD700;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .team-card:hover {
+            background: rgba(255, 215, 0, 0.3);
+            transform: scale(1.05);
+        }
+
+        .team-name {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .win-loss {
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        .career-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid #FFD700;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card-title {
+            font-size: 0.8em;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+
+        .stat-card-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .loading-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1f3a 0%, #16213e 100%);
+            text-align: center;
+        }
+
+        .loading-spinner {
+            border: 4px solid rgba(255, 215, 0, 0.2);
+            border-top: 4px solid #FFD700;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #FFD700;
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+
+        .game-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 500;
+            border-radius: 10px;
+        }
+
+        .overlay-content {
+            text-align: center;
+            background: rgba(10, 14, 39, 0.95);
+            padding: 40px;
+            border-radius: 10px;
+            border: 2px solid #FFD700;
+        }
+
+        .overlay-content h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #FFD700;
+        }
+
+        .overlay-content p {
+            font-size: 1.2em;
+            margin: 15px 0;
+        }
+
+        .controls-info {
+            background: rgba(255, 215, 0, 0.1);
+            padding: 15px;
+            border-left: 4px solid #FFD700;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .controls-info h4 {
+            color: #FFD700;
+            margin-bottom: 10px;
+        }
+
+        .controls-info p {
+            margin: 5px 0;
+            font-size: 0.95em;
+        }
+
+        @media (max-width: 768px) {
+            .menu-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .game-stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .hud {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .score-board {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Menu -->
+    <div id="mainMenu" class="main-menu">
+        <div class="menu-logo">🏀 NBA 2K26</div>
+        <h2>Web Edition</h2>
+        <div class="menu-buttons">
+            <button class="menu-btn" onclick="startMyCareer()">MyCAREER</button>
+            <button class="menu-btn" onclick="openMyPlayerBuilder()">MyPLAYER Builder</button>
+            <button class="menu-btn" onclick="startPlayNow()">Play Now</button>
+            <button class="menu-btn" onclick="openTheCity()">The City</button>
+            <button class="menu-btn" onclick="openMyTeam()">MyTEAM</button>
+            <button class="menu-btn" onclick="openMyGM()">MyGM</button>
+            <button class="menu-btn" onclick="openTraining()">Training</button>
+            <button class="menu-btn" onclick="openSettings()">Settings</button>
+        </div>
+    </div>
+
+    <!-- Game Container -->
+    <div id="gameContainer" class="game-container">
+        <div class="hud">
+            <div class="score-board">
+                <div class="team-info">
+                    <h3 id="homeTeam">HOME</h3>
+                    <div class="score" id="homeScore">0</div>
+                </div>
+                <div style="color: #FFD700; font-size: 1.5em; margin: 0 40px;">VS</div>
+                <div class="team-info">
+                    <h3 id="awayTeam">AWAY</h3>
+                    <div class="score" id="awayScore">0</div>
+                </div>
+            </div>
+            <div class="game-stats">
+                <div class="stat-display">
+                    <div class="stat-label">QUARTER</div>
+                    <div class="stat-value" id="quarter">1</div>
+                </div>
+                <div class="stat-display">
+                    <div class="stat-label">TIME</div>
+                    <div class="stat-value" id="gameTime">12:00</div>
+                </div>
+                <div class="stat-display">
+                    <div class="stat-label">STAMINA</div>
+                    <div class="stat-value" id="stamina">100%</div>
+                </div>
+                <button class="menu-btn" onclick="goToMainMenu()" style="margin: 0; width: 120px;">Menu</button>
+            </div>
+        </div>
+        <div class="canvas-container">
+            <canvas id="gameCanvas" class="game-canvas" width="1000" height="600"></canvas>
+        </div>
+    </div>
+
+    <!-- MyPLAYER Builder Menu -->
+    <div id="builderMenu" class="menu-panel">
+        <div class="menu-header">MyPLAYER BUILDER</div>
+        <button class="close-btn" onclick="goToMainMenu()">✕</button>
+        <div class="menu-content">
+            <div class="builder-section">
+                <h3>Player Information</h3>
+                <input type="text" class="builder-input" id="playerName" placeholder="Enter Player Name" value="Your Player">
+                <label>Position:</label>
+                <select class="builder-input" id="position" onchange="updateArchetype()">
+                    <option>Point Guard (PG)</option>
+                    <option>Shooting Guard (SG)</option>
+                    <option>Small Forward (SF)</option>
+                    <option>Power Forward (PF)</option>
+                    <option>Center (C)</option>
+                </select>
+                
+                <label>Archetype:</label>
+                <select class="builder-input" id="archetype" onchange="updateAttributeTemplate()">
+                    <option>Playmaker</option>
+                    <option>Sharpshooter</option>
+                    <option>Slasher</option>
+                    <option>Defender</option>
+                    <option>Balanced</option>
+                    <option>Post Scorer</option>
+                </select>
+            </div>
+
+            <div class="builder-section">
+                <h3>Attributes (Total: <span id="totalPoints">0</span>/150)</h3>
+                <div class="stat-bar">
+                    <div class="stat-label-inline">
+                        <span>Speed</span>
+                        <span><input type="number" style="width: 60px; padding: 5px;" min="1" max="99" value="85" id="speed"> / 99</span>
+                    </div>
+                    <div class="stat-bar-fill" style="width: 85%;"></div>
+                </div>
+                <div class="stat-bar">
+                    <div class="stat-label-inline">
+                        <span>Strength</span>
+                        <span><input type="number" style="width: 60px; padding: 5px;" min="1" max="99" value="75" id="strength"> / 99</span>
+                    </div>
+                    <div class="stat-bar-fill" style="width: 75%;"></div>
+                </div>
+                <div class="stat-bar">
+                    <div class="stat-label-inline">
+                        <span>Ball Handling</span>
+                        <span><input type="number" style="width: 60px; padding: 5px;" min="1" max="99" value="80" id="ballHandling"> / 99</span>
+                    </div>
+                    <div class="stat-bar-fill" style="width: 80%;"></div>
+                </div>
+                <div class="stat-bar">
+                    <div class="stat-label-inline">
+                        <span>Three-Point</span>
+                        <span><input type="number" style="width: 60px; padding: 5px;" min="1" max="99" value="78" id="threePoint"> / 99</span>
+                    </div>
+                    <div class="stat-bar-fill" style="width: 78%;"></div>
+                </div>
+                <div class="stat-bar">
+                    <div class="stat-label-inline">
+                        <span>Defense</span>
+                        <span><input type="number" style="width: 60px; padding: 5px;" min="1" max="99" value="72" id="defense"> / 99</span>
+                    </div>
+                    <div class="stat-bar-fill" style="width: 72%;"></div>
+                </div>
+                <div class="stat-bar">
+                    <div class="stat-label-inline">
+                        <span>Stamina</span>
+                        <span><input type="number" style="width: 60px; padding: 5px;" min="1" max="99" value="90" id="stamina_attr"> / 99</span>
+                    </div>
+                    <div class="stat-bar-fill" style="width: 90%;"></div>
+                </div>
+            </div>
+
+            <div class="builder-section">
+                <h3>Badges (Select 3)</h3>
+                <div class="badge-section" id="badgesContainer"></div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn" onclick="createMyPlayer()">Create Player</button>
+                <button class="btn" onclick="goToMainMenu()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- The City Menu -->
+    <div id="cityMenu" class="menu-panel">
+        <div class="menu-header">THE CITY</div>
+        <button class="close-btn" onclick="goToMainMenu()">✕</button>
+        <div class="menu-content">
+            <div class="builder-section">
+                <h3>🏙️ Welcome to The City</h3>
+                <p>Navigate the biggest online basketball community. Connect with friends, join squads, and dominate online play.</p>
+            </div>
+
+            <div class="builder-section">
+                <h3>Quick Actions</h3>
+                <button class="btn" style="width: 100%;" onclick="startRecGame()">Enter REC Center</button>
+                <button class="btn" style="width: 100%; margin-top: 10px;" onclick="startParkGame()">Play at Local Park</button>
+                <button class="btn" style="width: 100%; margin-top: 10px;" onclick="viewLeaderboards()">View Leaderboards</button>
+            </div>
+
+            <div class="builder-section">
+                <h3>Crews</h3>
+                <p>Join a crew with up to 50 members and complete communal goals for rewards.</p>
+                <button class="btn" style="width: 100%; margin-top: 10px;">Browse Crews</button>
+            </div>
+
+            <div class="builder-section">
+                <h3>Daily MVP</h3>
+                <p style="margin-bottom: 10px;">Top performers are featured! Check back daily for new challenges.</p>
+                <div class="stat-card">
+                    <div class="stat-card-title">Current Rank</div>
+                    <div class="stat-card-value">#8,432</div>
+                </div>
+            </div>
+
+            <button class="btn" onclick="goToMainMenu()" style="width: 100%; margin-top: 20px;">Back</button>
+        </div>
+    </div>
+
+    <!-- MyTEAM Menu -->
+    <div id="teamMenu" class="menu-panel">
+        <div class="menu-header">MyTEAM</div>
+        <button class="close-btn" onclick="goToMainMenu()">✕</button>
+        <div class="menu-content">
+            <div class="builder-section">
+                <h3>📦 My Squad</h3>
+                <p>Build your ultimate team with NBA & WNBA players.</p>
+            </div>
+
+            <div class="career-stats">
+                <div class="stat-card">
+                    <div class="stat-card-title">Team Overall</div>
+                    <div class="stat-card-value">92</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">Players</div>
+                    <div class="stat-card-value">13</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">MT Balance</div>
+                    <div class="stat-card-value">125K</div>
+                </div>
+            </div>
+
+            <div class="builder-section">
+                <h3>Game Modes</h3>
+                <button class="btn" style="width: 100%; margin: 10px 0;">Triple Threat Park</button>
+                <button class="btn" style="width: 100%; margin: 10px 0;">Showdown</button>
+                <button class="btn" style="width: 100%; margin: 10px 0;">Unlimited</button>
+                <button class="btn" style="width: 100%; margin: 10px 0;">Limited</button>
+            </div>
+
+            <div class="builder-section">
+                <h3>Collections</h3>
+                <p>Complete collections for card rewards.</p>
+                <button class="btn" style="width: 100%; margin-top: 10px;">View Collections</button>
+            </div>
+
+            <button class="btn" onclick="goToMainMenu()" style="width: 100%; margin-top: 20px;">Back</button>
+        </div>
+    </div>
+
+    <!-- MyGM Menu -->
+    <div id="gmMenu" class="menu-panel">
+        <div class="menu-header">MyGM / MyLEAGUE</div>
+        <button class="close-btn" onclick="goToMainMenu()">✕</button>
+        <div class="menu-content">
+            <div class="builder-section">
+                <h3>🏆 Franchise Management</h3>
+                <p>Build a championship team through trades, drafts, and free agency.</p>
+            </div>
+
+            <div class="builder-section">
+                <h3>Create New Franchise</h3>
+                <label>Select Team:</label>
+                <select class="builder-input">
+                    <option>Lakers</option>
+                    <option>Celtics</option>
+                    <option>Warriors</option>
+                    <option>Mavericks</option>
+                    <option>Bucks</option>
+                </select>
+                <label style="margin-top: 10px;">Difficulty:</label>
+                <select class="builder-input">
+                    <option>Sandbox (Custom)</option>
+                    <option>Scenario 1: Rebuild</option>
+                    <option>Scenario 2: Win Now</option>
+                    <option>Scenario 3: Draft Day</option>
+                </select>
+                <button class="btn" style="width: 100%; margin-top: 20px;">Start Franchise</button>
+            </div>
+
+            <button class="btn" onclick="goToMainMenu()" style="width: 100%; margin-top: 20px;">Back</button>
+        </div>
+    </div>
+
+    <!-- Training Menu -->
+    <div id="trainingMenu" class="menu-panel">
+        <div class="menu-header">TRAINING & DRILLS</div>
+        <button class="close-btn" onclick="goToMainMenu()">✕</button>
+        <div class="menu-content">
+            <div class="builder-section">
+                <h3>🎓 Learn2K</h3>
+                <p>Master every aspect of the game with interactive tutorials and drills.</p>
+            </div>
+
+            <div class="builder-section">
+                <h3>Beginner Tutorials</h3>
+                <button class="btn" style="width: 100%; margin: 5px 0;">Basic Controls</button>
+                <button class="btn" style="width: 100%; margin: 5px 0;">Shooting Mechanics</button>
+                <button class="btn" style="width: 100%; margin: 5px 0;">Dribbling Basics</button>
+                <button class="btn" style="width: 100%; margin: 5px 0;">Defense 101</button>
+            </div>
+
+            <div class="builder-section">
+                <h3>Intermediate Drills</h3>
+                <button class="btn" style="width: 100%; margin: 5px 0;">Speed Boost Challenge</button>
+                <button class="btn" style="width: 100%; margin: 5px 0;">Green Window Accuracy</button>
+                <button class="btn" style="width: 100%; margin: 5px 0;">Defensive Positioning</button>
+                <button class="btn" style="width: 100%; margin: 5px 0;">Rebounding Mastery</button>
+            </div>
+
+            <div class="builder-section">
+                <h3>Advanced Scenarios</h3>
+                <button class="btn" style="width: 100%; margin: 5px 0;">Clutch Shot Challenge</button>
+                <button class="btn" style="width: 100%; margin: 5px 0;">1v1 Defensive Drills</button>
+                <button class="btn" style="width: 100%; margin: 5px 0;">Team Offense Playbook</button>
+            </div>
+
+            <button class="btn" onclick="goToMainMenu()" style="width: 100%; margin-top: 20px;">Back</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // NBA 2K26 Web Edition - Complete Game System
+
+        // Global Game State
+        const gameState = {
+            currentMode: null,
+            myPlayer: null,
+            homeTeam: { name: 'Lakers', score: 0, players: [] },
+            awayTeam: { name: 'Celtics', score: 0, players: [] },
+            gameRunning: false,
+            quarter: 1,
+            gameTime: 720, // 12 minutes per quarter
+            possession: 'home',
+            playerStats: {
+                points: 0,
+                rebounds: 0,
+                assists: 0,
+                steals: 0,
+                blocks: 0,
+                fpGm: 0,
+                turnovers: 0,
+                fouls: 0
+            },
+            badges: [],
+            stamina: 100,
+            badges: [
+                { name: 'Limitless Range', tier: 'gold', active: true },
+                { name: 'Deadeye', tier: 'gold', active: true },
+                { name: 'Chase Down Artist', tier: 'silver', active: false },
+                { name: 'Defensive Anchor', tier: 'gold', active: true },
+                { name: 'Quick First Step', tier: 'bronze', active: false },
+                { name: 'Posterizer', tier: 'silver', active: false },
+                { name: 'Pogo Stick', tier: 'gold', active: true },
+                { name: 'Glue Hands', tier: 'bronze', active: false }
+            ]
+        };
+
+        // THREE.js Scene Setup (reused from previous version)
+        let scene, camera, renderer, ball;
+
+        function initThreeJS() {
+            const canvas = document.getElementById('gameCanvas');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+
+            camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+            camera.position.set(0, 3, 8);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            renderer.shadowMap.enabled = true;
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+
+            // Court
+            const courtGeometry = new THREE.PlaneGeometry(28, 15);
+            const courtMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+            const court = new THREE.Mesh(courtGeometry, courtMaterial);
+            court.rotation.x = -Math.PI / 2;
+            court.receiveShadow = true;
+            scene.add(court);
+
+            // Ball
+            const ballGeometry = new THREE.SphereGeometry(0.25, 32, 32);
+            const ballMaterial = new THREE.MeshStandardMaterial({ color: 0xFFA500 });
+            ball = new THREE.Mesh(ballGeometry, ballMaterial);
+            ball.position.y = 2;
+            ball.castShadow = true;
+            scene.add(ball);
+        }
+
+        // Menu Navigation
+        function showMainMenu() {
+            document.getElementById('mainMenu').style.display = 'flex';
+            document.getElementById('gameContainer').style.display = 'none';
+            document.getElementById('builderMenu').classList.remove('active');
+            document.getElementById('cityMenu').classList.remove('active');
+            document.getElementById('teamMenu').classList.remove('active');
+            document.getElementById('gmMenu').classList.remove('active');
+            document.getElementById('trainingMenu').classList.remove('active');
+        }
+
+        function goToMainMenu() {
+            gameState.gameRunning = false;
+            showMainMenu();
+        }
+
+        function openMyPlayerBuilder() {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('builderMenu').classList.add('active');
+            populateBadges();
+        }
+
+        function openTheCity() {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('cityMenu').classList.add('active');
+        }
+
+        function openMyTeam() {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('teamMenu').classList.add('active');
+        }
+
+        function openMyGM() {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('gmMenu').classList.add('active');
+        }
+
+        function openTraining() {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('trainingMenu').classList.add('active');
+        }
+
+        function openSettings() {
+            alert('Settings Panel Coming Soon!\n\nOptions for:\n- Audio/Video\n- Controls\n- Difficulty\n- Accessibility');
+        }
+
+        // MyPLAYER Builder
+        function populateBadges() {
+            const container = document.getElementById('badgesContainer');
+            container.innerHTML = '';
+            gameState.badges.forEach(badge => {
+                const badgeEl = document.createElement('div');
+                badgeEl.className = `badge ${badge.tier} ${badge.active ? 'active' : ''}`;
+                badgeEl.innerHTML = `<strong>${badge.name}</strong><br><small>${badge.tier.toUpperCase()}</small>`;
+                badgeEl.onclick = () => toggleBadge(badge);
+                container.appendChild(badgeEl);
+            });
+        }
+
+        function toggleBadge(badge) {
+            badge.active = !badge.active;
+            populateBadges();
+        }
+
+        function updateAttributeTemplate() {
+            const archetype = document.getElementById('archetype').value;
+            const templates = {
+                'Playmaker': { speed: 88, strength: 70, ballHandling: 99, threePoint: 75, defense: 78, stamina: 90 },
+                'Sharpshooter': { speed: 82, strength: 65, ballHandling: 80, threePoint: 99, defense: 72, stamina: 85 },
+                'Slasher': { speed: 95, strength: 85, ballHandling: 85, threePoint: 65, defense: 75, stamina: 92 },
+                'Defender': { speed: 90, strength: 80, ballHandling: 75, threePoint: 70, defense: 99, stamina: 95 },
+                'Balanced': { speed: 85, strength: 75, ballHandling: 80, threePoint: 78, defense: 80, stamina: 88 },
+                'Post Scorer': { speed: 75, strength: 95, ballHandling: 70, threePoint: 65, defense: 78, stamina: 80 }
+            };
+
+            const template = templates[archetype];
+            Object.keys(template).forEach(key => {
+                const elem = document.getElementById(key + (key === 'stamina' ? '_attr' : ''));
+                if (elem) elem.value = template[key];
+            });
+        }
+
+        function createMyPlayer() {
+            const playerName = document.getElementById('playerName').value || 'Your Player';
+            const position = document.getElementById('position').value;
+            const archetype = document.getElementById('archetype').value;
+
+            gameState.myPlayer = {
+                name: playerName,
+                position: position.split(' ')[0],
+                archetype: archetype,
+                attributes: {
+                    speed: parseInt(document.getElementById('speed').value),
+                    strength: parseInt(document.getElementById('strength').value),
+                    ballHandling: parseInt(document.getElementById('ballHandling').value),
+                    threePoint: parseInt(document.getElementById('threePoint').value),
+                    defense: parseInt(document.getElementById('defense').value),
+                    stamina: parseInt(document.getElementById('stamina_attr').value)
+                },
+                overall: 85,
+                level: 1,
+                experience: 0,
+                badges: gameState.badges.filter(b => b.active)
+            };
+
+            alert(`✅ Player Created!\n\nName: ${playerName}\nPosition: ${position}\nArchetype: ${archetype}\nOverall: ${gameState.myPlayer.overall}\n\nReady to play!`);
+            goToMainMenu();
+        }
+
+        // Game Modes
+        function startMyCareer() {
+            if (!gameState.myPlayer) {
+                alert('⚠️ Create a MyPLAYER first!');
+                openMyPlayerBuilder();
+                return;
+            }
+            gameState.currentMode = 'myCareer';
+            startGame('Lakers', 'Celtics');
+        }
+
+        function startPlayNow() {
+            gameState.currentMode = 'playNow';
+            startGame('Warriors', 'Mavericks');
+        }
+
+        function startRecGame() {
+            if (!gameState.myPlayer) {
+                alert('⚠️ Create a MyPLAYER first!');
+                openMyPlayerBuilder();
+                return;
+            }
+            gameState.currentMode = 'rec';
+            startGame('Your Team', 'Rivals');
+        }
+
+        function startParkGame() {
+            if (!gameState.myPlayer) {
+                alert('⚠️ Create a MyPLAYER first!');
+                openMyPlayerBuilder();
+                return;
+            }
+            gameState.currentMode = 'park';
+            startGame('Squad 1', 'Squad 2');
+        }
+
+        function viewLeaderboards() {
+            alert('LEADERBOARDS\n\n1. ProPlayer99 - 450,230 RP\n2. SkillShot88 - 448,100 RP\n3. YourPlayer - 125,450 RP\n\n🔥 You\'re ranked #3 this week!');
+        }
+
+        // Game Engine
+        function startGame(homeTeamName, awayTeamName) {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('gameContainer').style.display = 'flex';
+            
+            gameState.homeTeam.name = homeTeamName;
+            gameState.awayTeam.name = awayTeamName;
+            gameState.homeTeam.score = 0;
+            gameState.awayTeam.score = 0;
+            gameState.quarter = 1;
+            gameState.gameTime = 720;
+            gameState.gameRunning = true;
+
+            document.getElementById('homeTeam').textContent = homeTeamName;
+            document.getElementById('awayTeam').textContent = awayTeamName;
+
+            initThreeJS();
+            gameLoop();
+        }
+
+        function updateGameUI() {
+            document.getElementById('homeScore').textContent = gameState.homeTeam.score;
+            document.getElementById('awayScore').textContent = gameState.awayTeam.score;
+            document.getElementById('quarter').textContent = gameState.quarter;
+            
+            const minutes = Math.floor(gameState.gameTime / 60);
+            const seconds = gameState.gameTime % 60;
+            document.getElementById('gameTime').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            gameState.stamina = Math.max(0, Math.min(100, gameState.stamina + 0.1));
+            document.getElementById('stamina').textContent = gameState.stamina.toFixed(0) + '%';
+        }
+
+        function gameLoop() {
+            if (!gameState.gameRunning) return;
+
+            gameState.gameTime--;
+
+            // Quarter logic
+            if (gameState.gameTime <= 0) {
+                if (gameState.quarter < 4) {
+                    gameState.quarter++;
+                    gameState.gameTime = 720;
+                } else {
+                    endGame();
+                    return;
+                }
+            }
+
+            // Simulate scoring
+            if (Math.random() < 0.001) {
+                gameState.homeTeam.score += Math.random() < 0.5 ? 2 : 3;
+            }
+            if (Math.random() < 0.001) {
+                gameState.awayTeam.score += Math.random() < 0.5 ? 2 : 3;
+            }
+
+            // Simulate player stats
+            if (Math.random() < 0.01) gameState.playerStats.points++;
+            if (Math.random() < 0.005) gameState.playerStats.rebounds++;
+            if (Math.random() < 0.005) gameState.playerStats.assists++;
+
+            updateGameUI();
+            renderer.render(scene, camera);
+            requestAnimationFrame(gameLoop);
+        }
+
+        function endGame() {
+            gameState.gameRunning = false;
+            const winner = gameState.homeTeam.score > gameState.awayTeam.score ? gameState.homeTeam.name : gameState.awayTeam.name;
+            const message = `GAME OVER!\n\n${gameState.homeTeam.name}: ${gameState.homeTeam.score}\n${gameState.awayTeam.name}: ${gameState.awayTeam.score}\n\n${winner} WINS!\n\nYour Stats:\nPoints: ${gameState.playerStats.points}\nRebounds: ${gameState.playerStats.rebounds}\nAssists: ${gameState.playerStats.assists}`;
+            
+            alert(message);
+            goToMainMenu();
+        }
+
+        // Initialize
+        showMainMenu();
+    </script>
+</body>
+</html>
