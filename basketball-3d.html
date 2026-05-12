@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Basketball: You vs AI</title>
+    <title>3D Basketball: Team vs AI</title>
     <style>
         * {
             margin: 0;
@@ -278,11 +278,11 @@
 <body>
     <div class="container">
         <h1>🏀 3D Basketball</h1>
-        <p class="subtitle">You vs AI Team - Stickman Edition</p>
+        <p class="subtitle">Your Team vs AI Team - Team Play Edition</p>
 
         <div class="scoreboard">
             <div class="team-score">
-                <h2>👤 You</h2>
+                <h2>👥 Your Team</h2>
                 <div class="score" id="playerScore">0</div>
                 <div class="stats">
                     FG: <span id="playerFG">0</span>/<span id="playerAttempts">0</span> (<span id="playerPercent">0</span>%)
@@ -303,14 +303,14 @@
 
         <canvas id="gameCanvas" class="game-canvas" width="1000" height="500"></canvas>
 
-        <div class="info" id="info">Hold A/D to dribble • Space to shoot</div>
+        <div class="info" id="info">Hold A/D to dribble • Space to shoot • P to pass • Q/E to switch players</div>
 
         <div class="controls">
             <h3>🎮 Controls</h3>
             <div class="control-group">
                 <div class="control-item">
                     <strong>Move/Dribble:</strong>
-                    A/D or Arrow Keys (hold to dribble)
+                    A/D or Arrow Keys
                 </div>
                 <div class="control-item">
                     <strong>Jump:</strong>
@@ -323,6 +323,18 @@
                 <div class="control-item">
                     <strong>Pass:</strong>
                     P Key
+                </div>
+                <div class="control-item">
+                    <strong>Switch Player:</strong>
+                    Q / E Keys
+                </div>
+                <div class="control-item">
+                    <strong>Teammate 1:</strong>
+                    1 Key
+                </div>
+                <div class="control-item">
+                    <strong>Teammate 2:</strong>
+                    2 Key
                 </div>
             </div>
 
@@ -391,19 +403,46 @@
         ]);
         scene.add(new THREE.Line(centerLine, linesMaterial));
 
-        // Baskets
-        const basketGeometry = new THREE.BoxGeometry(1, 0.1, 1);
-        const basketMaterial = new THREE.MeshStandardMaterial({ color: 0xFFD700, metalness: 0.8 });
+        // Create Hoop and Backboard
+        function createBasket(x, direction) {
+            const group = new THREE.Group();
 
-        const playerBasket = new THREE.Mesh(basketGeometry, basketMaterial);
-        playerBasket.position.set(13, 3.05, 0);
-        playerBasket.receiveShadow = true;
-        scene.add(playerBasket);
+            // Backboard
+            const backboardGeometry = new THREE.PlaneGeometry(1.5, 1.5);
+            const backboardMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.3 });
+            const backboard = new THREE.Mesh(backboardGeometry, backboardMaterial);
+            backboard.position.set(x, 3.2, 0);
+            backboard.receiveShadow = true;
+            if (direction === 1) backboard.rotation.y = Math.PI / 6;
+            else backboard.rotation.y = -Math.PI / 6;
+            group.add(backboard);
 
-        const aiBasket = new THREE.Mesh(basketGeometry, basketMaterial);
-        aiBasket.position.set(-13, 3.05, 0);
-        aiBasket.receiveShadow = true;
-        scene.add(aiBasket);
+            // Rim (hoop)
+            const rimGeometry = new THREE.TorusGeometry(0.25, 0.05, 16, 16);
+            const rimMaterial = new THREE.MeshStandardMaterial({ color: 0xFF0000, metalness: 0.9 });
+            const rim = new THREE.Mesh(rimGeometry, rimMaterial);
+            rim.position.set(x + direction * 0.3, 3.05, 0);
+            rim.rotation.x = Math.PI / 2;
+            rim.castShadow = true;
+            rim.receiveShadow = true;
+            group.add(rim);
+
+            // Net (visual)
+            const netGeometry = new THREE.ConeGeometry(0.25, 0.5, 16);
+            const netMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, wireframe: false, opacity: 0.7, transparent: true });
+            const net = new THREE.Mesh(netGeometry, netMaterial);
+            net.position.set(x + direction * 0.3, 2.55, 0);
+            net.castShadow = true;
+            group.add(net);
+
+            return group;
+        }
+
+        const playerBasketGroup = createBasket(13, 1);
+        scene.add(playerBasketGroup);
+
+        const aiBasketGroup = createBasket(-13, -1);
+        scene.add(aiBasketGroup);
 
         // Basketball
         const ballGeometry = new THREE.SphereGeometry(0.25, 32, 32);
@@ -413,7 +452,7 @@
         ball.receiveShadow = true;
         scene.add(ball);
 
-        // Player data
+        // Game state
         const gameState = {
             running: false,
             timeLeft: 300,
@@ -425,47 +464,12 @@
             playerAttempts: 0,
             aiScore: 0,
             aiFG: 0,
-            aiAttempts: 0
-        };
-
-        const playerData = {
-            mesh: null,
-            position: new THREE.Vector3(-8, 0, 0),
-            velocity: new THREE.Vector3(0, 0, 0),
-            speed: 0.15,
-            jumpPower: 0.25,
-            isJumping: false,
-            hasBall: true,
-            isDribbling: false,
-            canShoot: true,
-            shootingPower: 0
-        };
-
-        const aiPlayers = [];
-        for (let i = 0; i < 3; i++) {
-            aiPlayers.push({
-                mesh: null,
-                position: new THREE.Vector3(10, 0, -2 + i * 2),
-                velocity: new THREE.Vector3(0, 0, 0),
-                speed: 0.08 + (gameState.difficulty === 'hard' ? 0.05 : 0),
-                jumpPower: 0.25,
-                isJumping: false,
-                hasBall: false,
-                isDribbling: false
-            });
-        }
-
-        let ballPhysics = {
-            position: playerData.position.clone().add(new THREE.Vector3(0, 0.8, 0)),
-            velocity: new THREE.Vector3(0, 0, 0),
-            inPlay: false,
-            gravity: 0.01,
-            friction: 0.98,
-            dribbleBounce: 0
+            aiAttempts: 0,
+            currentPlayerIndex: 0 // 0=you, 1=teammate1, 2=teammate2
         };
 
         // Create stickman
-        function createStickman(x, y, z, color) {
+        function createStickman(x, y, z, color, label) {
             const group = new THREE.Group();
 
             // Body
@@ -516,17 +520,86 @@
 
             group.position.set(x, y, z);
             group.castShadow = true;
+            group.label = label;
             return group;
         }
 
-        // Create all players
-        playerData.mesh = createStickman(playerData.position.x, playerData.position.y, playerData.position.z, 0x3498db);
-        scene.add(playerData.mesh);
+        // Player team (you + 2 teammates)
+        const playerTeam = [
+            { 
+                mesh: createStickman(-8, 0, -2, 0x3498db, 'YOU'),
+                position: new THREE.Vector3(-8, 0, -2),
+                velocity: new THREE.Vector3(0, 0, 0),
+                speed: 0.15,
+                jumpPower: 0.25,
+                isJumping: false,
+                hasBall: true,
+                isDribbling: false,
+                canShoot: true,
+                shootingPower: 0
+            },
+            {
+                mesh: createStickman(-8, 0, 0, 0x3498db, 'TM1'),
+                position: new THREE.Vector3(-8, 0, 0),
+                velocity: new THREE.Vector3(0, 0, 0),
+                speed: 0.12,
+                jumpPower: 0.25,
+                isJumping: false,
+                hasBall: false,
+                isDribbling: false,
+                canShoot: true,
+                shootingPower: 0
+            },
+            {
+                mesh: createStickman(-8, 0, 2, 0x3498db, 'TM2'),
+                position: new THREE.Vector3(-8, 0, 2),
+                velocity: new THREE.Vector3(0, 0, 0),
+                speed: 0.12,
+                jumpPower: 0.25,
+                isJumping: false,
+                hasBall: false,
+                isDribbling: false,
+                canShoot: true,
+                shootingPower: 0
+            }
+        ];
 
-        aiPlayers.forEach((ai, index) => {
-            ai.mesh = createStickman(ai.position.x, ai.position.y, ai.position.z, 0xe74c3c);
-            scene.add(ai.mesh);
+        playerTeam.forEach(p => scene.add(p.mesh));
+
+        // AI team
+        const aiTeam = [];
+        const aiPositions = [
+            new THREE.Vector3(10, 0, -2),
+            new THREE.Vector3(10, 0, 0),
+            new THREE.Vector3(10, 0, 2)
+        ];
+
+        aiPositions.forEach((pos, idx) => {
+            aiTeam.push({
+                mesh: createStickman(pos.x, pos.y, pos.z, 0xe74c3c, `AI${idx + 1}`),
+                position: pos.clone(),
+                velocity: new THREE.Vector3(0, 0, 0),
+                speed: 0.1,
+                jumpPower: 0.25,
+                isJumping: false,
+                hasBall: false,
+                isDribbling: false,
+                targetPos: null,
+                moveTimer: 0
+            });
         });
+
+        aiTeam.forEach(ai => scene.add(ai.mesh));
+
+        // Ball physics
+        let ballPhysics = {
+            position: playerTeam[0].position.clone().add(new THREE.Vector3(0, 0.8, 0)),
+            velocity: new THREE.Vector3(0, 0, 0),
+            inPlay: false,
+            gravity: 0.01,
+            friction: 0.98,
+            dribbleBounce: 0
+        };
 
         // Input
         const keys = {};
@@ -566,26 +639,32 @@
             gameState.aiFG = 0;
             gameState.aiAttempts = 0;
             gameState.possession = 'player';
+            gameState.currentPlayerIndex = 0;
 
-            playerData.position.set(-8, 0, 0);
-            playerData.velocity.set(0, 0, 0);
-            playerData.isJumping = false;
-            playerData.hasBall = true;
-            playerData.isDribbling = false;
-            playerData.canShoot = true;
-            playerData.shootingPower = 0;
+            playerTeam.forEach((p, idx) => {
+                if (idx === 0) p.position.set(-8, 0, -2);
+                else if (idx === 1) p.position.set(-8, 0, 0);
+                else p.position.set(-8, 0, 2);
+                p.velocity.set(0, 0, 0);
+                p.isJumping = false;
+                p.hasBall = idx === 0;
+                p.isDribbling = false;
+                p.canShoot = true;
+                p.shootingPower = 0;
+            });
 
-            ballPhysics.position = playerData.position.clone().add(new THREE.Vector3(0, 0.8, 0));
-            ballPhysics.velocity.set(0, 0, 0);
-            ballPhysics.inPlay = false;
-
-            aiPlayers.forEach((ai, index) => {
-                ai.position.set(10, 0, -2 + index * 2);
+            aiTeam.forEach((ai, idx) => {
+                if (idx === 0) ai.position.set(10, 0, -2);
+                else if (idx === 1) ai.position.set(10, 0, 0);
+                else ai.position.set(10, 0, 2);
                 ai.velocity.set(0, 0, 0);
                 ai.isJumping = false;
                 ai.hasBall = false;
-                ai.isDribbling = false;
             });
+
+            ballPhysics.position = playerTeam[0].position.clone().add(new THREE.Vector3(0, 0.8, 0));
+            ballPhysics.velocity.set(0, 0, 0);
+            ballPhysics.inPlay = false;
 
             document.getElementById('startBtn').textContent = 'Start Game';
             document.getElementById('startBtn').disabled = false;
@@ -606,78 +685,64 @@
                 }
             }
 
+            const currentPlayer = playerTeam[gameState.currentPlayerIndex];
+
             // Player movement
             const moveX = (keys['d'] || keys['arrowright'] ? 1 : 0) - (keys['a'] || keys['arrowleft'] ? 1 : 0);
             const moveZ = (keys['s'] || keys['arrowdown'] ? 1 : 0) - (keys['w'] || keys['arrowup'] ? 1 : 0);
 
             if (moveX !== 0 || moveZ !== 0) {
-                playerData.isDribbling = true;
+                currentPlayer.isDribbling = true;
                 const moveVec = new THREE.Vector3(moveX, 0, moveZ).normalize();
-                playerData.velocity.x += moveVec.x * playerData.speed;
-                playerData.velocity.z += moveVec.z * playerData.speed;
+                currentPlayer.velocity.x += moveVec.x * currentPlayer.speed;
+                currentPlayer.velocity.z += moveVec.z * currentPlayer.speed;
             } else {
-                playerData.isDribbling = false;
+                currentPlayer.isDribbling = false;
             }
 
             // Jump
-            if (keys['w'] && !playerData.isJumping) {
-                playerData.velocity.y = playerData.jumpPower;
-                playerData.isJumping = true;
+            if ((keys['w'] || keys['arrowup']) && !currentPlayer.isJumping) {
+                currentPlayer.velocity.y = currentPlayer.jumpPower;
+                currentPlayer.isJumping = true;
+            }
+
+            // Switch player
+            if (keys['q']) {
+                gameState.currentPlayerIndex = (gameState.currentPlayerIndex - 1 + 3) % 3;
+                keys['q'] = false;
+            }
+            if (keys['e']) {
+                gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % 3;
+                keys['e'] = false;
+            }
+
+            // Quick pass to teammate
+            if (keys['1'] && currentPlayer.hasBall) {
+                passToTeammate(1);
+                keys['1'] = false;
+            }
+            if (keys['2'] && currentPlayer.hasBall) {
+                passToTeammate(2);
+                keys['2'] = false;
             }
 
             // Shooting
-            if (keys[' '] && playerData.hasBall && playerData.canShoot) {
-                playerData.shootingPower += 2;
-                if (playerData.shootingPower > 100) playerData.shootingPower = 100;
-            } else if (playerData.shootingPower > 0) {
-                shoot(playerData, playerData.shootingPower);
-                playerData.shootingPower = 0;
-                playerData.canShoot = false;
-                setTimeout(() => { playerData.canShoot = true; }, 500);
+            if (keys[' '] && currentPlayer.hasBall && currentPlayer.canShoot) {
+                currentPlayer.shootingPower += 2;
+                if (currentPlayer.shootingPower > 100) currentPlayer.shootingPower = 100;
+            } else if (currentPlayer.shootingPower > 0) {
+                shoot(currentPlayer, currentPlayer.shootingPower);
+                currentPlayer.shootingPower = 0;
+                currentPlayer.canShoot = false;
+                setTimeout(() => { currentPlayer.canShoot = true; }, 500);
             }
 
-            // Physics
-            playerData.velocity.y -= 0.015; // Gravity
-            playerData.velocity.x *= 0.92;
-            playerData.velocity.z *= 0.92;
-
-            playerData.position.add(playerData.velocity);
-
-            if (playerData.position.y < 0) {
-                playerData.position.y = 0;
-                playerData.velocity.y = 0;
-                playerData.isJumping = false;
-            }
-
-            // Court bounds
-            if (playerData.position.x < -13) playerData.position.x = -13;
-            if (playerData.position.x > 13) playerData.position.x = 13;
-            if (playerData.position.z < -7) playerData.position.z = -7;
-            if (playerData.position.z > 7) playerData.position.z = 7;
-
-            playerData.mesh.position.copy(playerData.position);
+            // Physics for all players
+            playerTeam.forEach(p => updatePlayerPhysics(p));
+            aiTeam.forEach(ai => updateAIPhysics(ai));
 
             // AI behavior
-            aiPlayers.forEach(ai => {
-                ai.velocity.y -= 0.015;
-                ai.velocity.x *= 0.92;
-                ai.velocity.z *= 0.92;
-
-                ai.position.add(ai.velocity);
-
-                if (ai.position.y < 0) {
-                    ai.position.y = 0;
-                    ai.velocity.y = 0;
-                    ai.isJumping = false;
-                }
-
-                if (ai.position.x < -13) ai.position.x = -13;
-                if (ai.position.x > 13) ai.position.x = 13;
-                if (ai.position.z < -7) ai.position.z = -7;
-                if (ai.position.z > 7) ai.position.z = 7;
-
-                ai.mesh.position.copy(ai.position);
-            });
+            aiTeam.forEach(ai => updateAIBehavior(ai));
 
             // Ball physics
             if (ballPhysics.inPlay) {
@@ -694,71 +759,117 @@
                     ballPhysics.velocity.z *= 0.95;
                 }
 
-                if (ballPhysics.position.x < -13) {
-                    ballPhysics.position.x = -13;
-                    ballPhysics.velocity.x *= -0.8;
-                }
-                if (ballPhysics.position.x > 13) {
-                    ballPhysics.position.x = 13;
-                    ballPhysics.velocity.x *= -0.8;
-                }
-                if (ballPhysics.position.z < -7) {
-                    ballPhysics.position.z = -7;
-                    ballPhysics.velocity.z *= -0.8;
-                }
-                if (ballPhysics.position.z > 7) {
-                    ballPhysics.position.z = 7;
-                    ballPhysics.velocity.z *= -0.8;
-                }
+                if (Math.abs(ballPhysics.position.x) > 13.5) ballPhysics.velocity.x *= -0.8;
+                if (Math.abs(ballPhysics.position.z) > 7.5) ballPhysics.velocity.z *= -0.8;
 
-                // Basket collision
                 checkBasketCollision();
-
-                // Player catching
-                if (distance(ballPhysics.position, playerData.position) < 0.8 && !playerData.hasBall) {
-                    playerData.hasBall = true;
-                    ballPhysics.inPlay = false;
-                    gameState.possession = 'player';
-                }
-
-                // AI catching
-                aiPlayers.forEach(ai => {
-                    if (distance(ballPhysics.position, ai.position) < 0.8 && !ai.hasBall) {
-                        ai.hasBall = true;
-                        ballPhysics.inPlay = false;
-                        gameState.possession = 'ai';
-                    }
-                });
-            } else if (playerData.hasBall && playerData.isDribbling) {
-                // Dribbling
+                checkPlayerCatching();
+            } else if (currentPlayer.hasBall && currentPlayer.isDribbling) {
                 ballPhysics.dribbleBounce = (Math.sin(gameState.gameTime * 0.1) + 1) / 2 * 0.3;
-                ballPhysics.position.copy(playerData.position);
+                ballPhysics.position.copy(currentPlayer.position);
                 ballPhysics.position.y = 0.4 + ballPhysics.dribbleBounce;
-            } else if (playerData.hasBall) {
-                ballPhysics.position.copy(playerData.position);
+            } else if (playerTeam.some(p => p.hasBall)) {
+                const playerWithBall = playerTeam.find(p => p.hasBall);
+                ballPhysics.position.copy(playerWithBall.position);
                 ballPhysics.position.y = 0.8;
-            } else if (aiPlayers.some(ai => ai.hasBall)) {
-                const aiWithBall = aiPlayers.find(ai => ai.hasBall);
+            } else if (aiTeam.some(ai => ai.hasBall)) {
+                const aiWithBall = aiTeam.find(ai => ai.hasBall);
                 ballPhysics.position.copy(aiWithBall.position);
                 ballPhysics.position.y = 0.8;
+            }
 
-                if (Math.random() < 0.01) {
-                    shoot(aiWithBall, 40 + Math.random() * 40);
-                    aiWithBall.hasBall = false;
-                    gameState.possession = 'player';
+            // Update mesh positions
+            playerTeam.forEach(p => p.mesh.position.copy(p.position));
+            aiTeam.forEach(ai => ai.mesh.position.copy(ai.position));
+            ball.position.copy(ballPhysics.position);
+
+            updateUI();
+        }
+
+        function updatePlayerPhysics(player) {
+            player.velocity.y -= 0.015;
+            player.velocity.x *= 0.92;
+            player.velocity.z *= 0.92;
+
+            player.position.add(player.velocity);
+
+            if (player.position.y < 0) {
+                player.position.y = 0;
+                player.velocity.y = 0;
+                player.isJumping = false;
+            }
+
+            if (player.position.x < -13) player.position.x = -13;
+            if (player.position.x > 13) player.position.x = 13;
+            if (player.position.z < -7) player.position.z = -7;
+            if (player.position.z > 7) player.position.z = 7;
+        }
+
+        function updateAIPhysics(ai) {
+            ai.velocity.y -= 0.015;
+            ai.velocity.x *= 0.92;
+            ai.velocity.z *= 0.92;
+
+            ai.position.add(ai.velocity);
+
+            if (ai.position.y < 0) {
+                ai.position.y = 0;
+                ai.velocity.y = 0;
+                ai.isJumping = false;
+            }
+
+            if (ai.position.x < -13) ai.position.x = -13;
+            if (ai.position.x > 13) ai.position.x = 13;
+            if (ai.position.z < -7) ai.position.z = -7;
+            if (ai.position.z > 7) ai.position.z = 7;
+        }
+
+        function updateAIBehavior(ai) {
+            ai.moveTimer++;
+            if (ai.moveTimer > 30) {
+                ai.moveTimer = 0;
+                if (gameState.possession === 'ai') {
+                    ai.targetPos = new THREE.Vector3(13 + Math.random() * 2, 0, (Math.random() - 0.5) * 6);
+                } else {
+                    const currentPlayer = playerTeam[gameState.currentPlayerIndex];
+                    ai.targetPos = currentPlayer.position.clone();
                 }
             }
 
-            ball.position.copy(ballPhysics.position);
-            updateUI();
+            if (ai.targetPos) {
+                const direction = ai.targetPos.clone().sub(ai.position).normalize();
+                ai.velocity.x = direction.x * ai.speed;
+                ai.velocity.z = direction.z * ai.speed;
+            }
+
+            if (ai.hasBall && Math.random() < 0.01) {
+                shoot(ai, 35 + Math.random() * 40);
+                ai.hasBall = false;
+                gameState.possession = 'player';
+            }
+        }
+
+        function passToTeammate(templateIndex) {
+            const currentPlayer = playerTeam[gameState.currentPlayerIndex];
+            currentPlayer.hasBall = false;
+            ballPhysics.inPlay = true;
+
+            const teammate = playerTeam[templateIndex];
+            const direction = teammate.position.clone().sub(currentPlayer.position).normalize();
+            const speed = 0.3;
+            ballPhysics.velocity.copy(direction.multiplyScalar(speed));
+            ballPhysics.velocity.y = 0.1;
+
+            gameState.playerAttempts++;
         }
 
         function shoot(player, power) {
             player.hasBall = false;
             ballPhysics.inPlay = true;
 
+            const isPlayer = playerTeam.includes(player);
             const direction = new THREE.Vector3(
-                player === playerData ? 1 : -1,
+                isPlayer ? 1 : -1,
                 0.5,
                 (Math.random() - 0.5) * 0.3
             ).normalize();
@@ -766,27 +877,50 @@
             const speed = (power / 100) * 0.4;
             ballPhysics.velocity.copy(direction.multiplyScalar(speed));
 
-            if (player === playerData) {
+            if (isPlayer) {
                 gameState.playerAttempts++;
+                gameState.possession = 'ai';
             } else {
                 gameState.aiAttempts++;
+                gameState.possession = 'player';
             }
         }
 
         function checkBasketCollision() {
-            const distToPlayerBasket = ballPhysics.position.distanceTo(playerBasket.position);
-            if (distToPlayerBasket < 0.8 && Math.abs(ballPhysics.velocity.y) < 0.1) {
+            const playerBasketPos = new THREE.Vector3(13.3, 3.05, 0);
+            const aiBasketPos = new THREE.Vector3(-13.3, 3.05, 0);
+
+            const distToPlayerBasket = ballPhysics.position.distanceTo(playerBasketPos);
+            if (distToPlayerBasket < 0.6 && Math.abs(ballPhysics.velocity.y) < 0.15) {
                 gameState.playerScore += 2;
                 gameState.playerFG++;
                 resetBall('player');
             }
 
-            const distToAIBasket = ballPhysics.position.distanceTo(aiBasket.position);
-            if (distToAIBasket < 0.8 && Math.abs(ballPhysics.velocity.y) < 0.1) {
+            const distToAIBasket = ballPhysics.position.distanceTo(aiBasketPos);
+            if (distToAIBasket < 0.6 && Math.abs(ballPhysics.velocity.y) < 0.15) {
                 gameState.aiScore += 2;
                 gameState.aiFG++;
                 resetBall('ai');
             }
+        }
+
+        function checkPlayerCatching() {
+            playerTeam.forEach(p => {
+                if (!p.hasBall && distance(ballPhysics.position, p.position) < 0.8) {
+                    p.hasBall = true;
+                    ballPhysics.inPlay = false;
+                    gameState.possession = 'player';
+                }
+            });
+
+            aiTeam.forEach(ai => {
+                if (!ai.hasBall && distance(ballPhysics.position, ai.position) < 0.8) {
+                    ai.hasBall = true;
+                    ballPhysics.inPlay = false;
+                    gameState.possession = 'ai';
+                }
+            });
         }
 
         function resetBall(scorer) {
@@ -794,11 +928,11 @@
             ballPhysics.velocity.set(0, 0, 0);
 
             if (scorer === 'player') {
-                playerData.hasBall = true;
+                playerTeam[0].hasBall = true;
                 gameState.possession = 'player';
-                ballPhysics.position.copy(playerData.position).add(new THREE.Vector3(0, 0.8, 0));
+                ballPhysics.position.copy(playerTeam[0].position).add(new THREE.Vector3(0, 0.8, 0));
             } else {
-                const randomAI = aiPlayers[Math.floor(Math.random() * aiPlayers.length)];
+                const randomAI = aiTeam[Math.floor(Math.random() * aiTeam.length)];
                 randomAI.hasBall = true;
                 gameState.possession = 'ai';
                 ballPhysics.position.copy(randomAI.position).add(new THREE.Vector3(0, 0.8, 0));
@@ -825,8 +959,9 @@
             document.getElementById('timer').textContent = `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
 
             const possessionEl = document.getElementById('possession');
+            const playerName = ['YOU', 'TM1', 'TM2'][gameState.currentPlayerIndex];
             if (gameState.possession === 'player') {
-                possessionEl.textContent = '👤 Your possession';
+                possessionEl.textContent = `👥 Your possession (${playerName})`;
                 possessionEl.classList.remove('ai');
             } else {
                 possessionEl.textContent = '🤖 AI possession';
@@ -841,10 +976,10 @@
 
             let winner, message;
             if (gameState.playerScore > gameState.aiScore) {
-                winner = '🎉 YOU WIN! 🎉';
-                message = `You dominated the AI team!`;
+                winner = '🎉 YOUR TEAM WINS! 🎉';
+                message = `Great teamwork! You dominated!`;
             } else if (gameState.aiScore > gameState.playerScore) {
-                winner = '😔 AI WINS!';
+                winner = '😔 AI TEAM WINS!';
                 message = `The AI team was too strong. Try again!`;
             } else {
                 winner = '🤝 TIED!';
@@ -863,7 +998,6 @@
             renderer.render(scene, camera);
         }
 
-        // Handle window resize
         window.addEventListener('resize', () => {
             const width = canvas.clientWidth;
             const height = canvas.clientHeight;
@@ -872,7 +1006,6 @@
             renderer.setSize(width, height);
         });
 
-        // Initial render
         renderer.render(scene, camera);
     </script>
 </body>
