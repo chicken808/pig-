@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basketball: You vs AI Team</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+        }
+
+        .team-score {
+            flex: 1;
+        }
+
+        .team-score h2 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .score {
+            font-size: 3.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .stats {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .divider {
+            width: 2px;
+            background: rgba(255,255,255,0.3);
+            margin: 0 20px;
+        }
+
+        .game-canvas {
+            background: linear-gradient(180deg, #90EE90 0%, #228B22 100%);
+            border: 3px solid #333;
+            border-radius: 10px;
+            display: block;
+            margin: 20px auto;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+            cursor: crosshair;
+        }
+
+        .controls {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .controls h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .control-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .control-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .control-item strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .start-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        .reset-btn {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .reset-btn:hover {
+            background: #ff5252;
+            transform: scale(1.05);
+        }
+
+        .difficulty-btn {
+            background: #4ECDC4;
+            color: white;
+            padding: 10px 15px;
+            font-size: 0.9em;
+        }
+
+        .difficulty-btn.active {
+            background: #1a9d8d;
+            transform: scale(1.05);
+        }
+
+        .timer {
+            text-align: center;
+            font-size: 1.5em;
+            color: #667eea;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .game-over {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            text-align: center;
+            z-index: 1000;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .game-over h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .game-over p {
+            font-size: 1.2em;
+            color: #666;
+            margin: 15px 0;
+        }
+
+        .game-over button {
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        .possession {
+            text-align: center;
+            font-size: 1.1em;
+            color: #667eea;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .possession.ai {
+            color: #ff6b6b;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .score {
+                font-size: 2.5em;
+            }
+
+            .control-group {
+                grid-template-columns: 1fr;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            button {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏀 Basketball</h1>
+        <p class="subtitle">You vs AI Team</p>
+
+        <div class="scoreboard">
+            <div class="team-score">
+                <h2>👤 You</h2>
+                <div class="score" id="playerScore">0</div>
+                <div class="stats">
+                    FG: <span id="playerFG">0</span>/<span id="playerAttempts">0</span> (<span id="playerPercent">0</span>%)
+                </div>
+            </div>
+            <div class="divider"></div>
+            <div class="team-score">
+                <h2>🤖 AI Team</h2>
+                <div class="score" id="aiScore">0</div>
+                <div class="stats">
+                    FG: <span id="aiFG">0</span>/<span id="aiAttempts">0</span> (<span id="aiPercent">0</span>%)
+                </div>
+            </div>
+        </div>
+
+        <div class="timer" id="timer">Time: 5:00</div>
+        <div class="possession" id="possession">Your possession</div>
+
+        <canvas id="gameCanvas" class="game-canvas" width="800" height="400"></canvas>
+
+        <div class="controls">
+            <h3>🎮 Controls</h3>
+            <div class="control-group">
+                <div class="control-item">
+                    <strong>Move:</strong>
+                    ⬅️ A / ➡️ D or Arrow Keys
+                </div>
+                <div class="control-item">
+                    <strong>Jump:</strong>
+                    W or Up Arrow
+                </div>
+                <div class="control-item">
+                    <strong>Shoot:</strong>
+                    SPACEBAR
+                </div>
+                <div class="control-item">
+                    <strong>Pass:</strong>
+                    P Key (when holding ball)
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px;">⚙️ Difficulty</h3>
+            <div class="buttons">
+                <button class="difficulty-btn active" onclick="setDifficulty('easy')">Easy</button>
+                <button class="difficulty-btn" onclick="setDifficulty('medium')">Medium</button>
+                <button class="difficulty-btn" onclick="setDifficulty('hard')">Hard</button>
+            </div>
+
+            <div class="buttons">
+                <button class="start-btn" id="startBtn" onclick="toggleGame()">Start Game</button>
+                <button class="reset-btn" onclick="resetGame()">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <div class="game-over" id="gameOver">
+        <h2 id="gameOverTitle">Game Over!</h2>
+        <p id="gameOverMessage"></p>
+        <p>Final Score: <strong><span id="finalPlayerScore">0</span> - <span id="finalAIScore">0</span></strong></p>
+        <button class="start-btn" onclick="resetGame()">Play Again</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game state
+        let gameRunning = false;
+        let timeLeft = 300; // 5 minutes
+        let gameTime = 0;
+        let difficulty = 'easy';
+
+        // Player
+        const player = {
+            x: 100,
+            y: 200,
+            width: 30,
+            height: 50,
+            velocityX: 0,
+            velocityY: 0,
+            speed: 5,
+            jumpPower: 15,
+            isJumping: false,
+            hasBall: true,
+            shootingPower: 0,
+            shootingActive: false,
+            color: '#3498db'
+        };
+
+        // AI Team (3 players)
+        const aiPlayers = [
+            { x: 650, y: 150, width: 30, height: 50, velocityX: 0, velocityY: 0, speed: 4, isJumping: false, hasBall: false, color: '#e74c3c', role: 'defender' },
+            { x: 700, y: 220, width: 30, height: 50, velocityX: 0, velocityY: 0, speed: 3.5, isJumping: false, hasBall: false, color: '#e74c3c', role: 'defender' },
+            { x: 650, y: 280, width: 30, height: 50, velocityX: 0, velocityY: 0, speed: 3.8, isJumping: false, hasBall: false, color: '#e74c3c', role: 'defender' }
+        ];
+
+        // Ball
+        const ball = {
+            x: player.x + player.width / 2,
+            y: player.y - 20,
+            radius: 8,
+            velocityX: 0,
+            velocityY: 0,
+            friction: 0.98,
+            gravity: 0.5,
+            inPlay: false
+        };
+
+        // Baskets
+        const playerBasket = { x: 750, y: 100, width: 50, height: 40 };
+        const aiBasket = { x: 50, y: 100, width: 50, height: 40 };
+
+        // Stats
+        let playerScore = 0, playerFG = 0, playerAttempts = 0;
+        let aiScore = 0, aiFG = 0, aiAttempts = 0;
+        let possession = 'player'; // who has the ball
+
+        // Input
+        const keys = {};
+        window.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            if (e.key === ' ') e.preventDefault();
+        });
+        window.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        function setDifficulty(level) {
+            difficulty = level;
+            document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function toggleGame() {
+            if (!gameRunning) {
+                gameRunning = true;
+                timeLeft = 300;
+                gameTime = 0;
+                document.getElementById('startBtn').textContent = 'Game Running...';
+                document.getElementById('startBtn').disabled = true;
+                gameLoop();
+            }
+        }
+
+        function resetGame() {
+            gameRunning = false;
+            timeLeft = 300;
+            gameTime = 0;
+            playerScore = 0;
+            playerFG = 0;
+            playerAttempts = 0;
+            aiScore = 0;
+            aiFG = 0;
+            aiAttempts = 0;
+            possession = 'player';
+            player.x = 100;
+            player.y = 200;
+            player.velocityX = 0;
+            player.velocityY = 0;
+            player.hasBall = true;
+            player.shootingActive = false;
+            player.shootingPower = 0;
+            ball.x = player.x + player.width / 2;
+            ball.y = player.y - 20;
+            ball.velocityX = 0;
+            ball.velocityY = 0;
+            ball.inPlay = false;
+            
+            aiPlayers.forEach(ai => {
+                ai.x = 650;
+                ai.velocityX = 0;
+                ai.velocityY = 0;
+                ai.isJumping = false;
+                ai.hasBall = false;
+            });
+            aiPlayers[0].x = 650;
+            aiPlayers[1].x = 700;
+            aiPlayers[2].x = 650;
+
+            document.getElementById('startBtn').textContent = 'Start Game';
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('gameOver').style.display = 'none';
+            updateUI();
+            draw();
+        }
+
+        function update() {
+            if (!gameRunning) return;
+
+            gameTime++;
+            if (gameTime % 60 === 0) {
+                timeLeft--;
+                if (timeLeft <= 0) {
+                    endGame();
+                    return;
+                }
+            }
+
+            // Player movement
+            if (keys['a'] || keys['arrowleft']) player.velocityX = -player.speed;
+            else if (keys['d'] || keys['arrowright']) player.velocityX = player.speed;
+            else player.velocityX *= 0.8;
+
+            if ((keys['w'] || keys['arrowup']) && !player.isJumping) {
+                player.velocityY = -player.jumpPower;
+                player.isJumping = true;
+            }
+
+            // Shooting
+            if (keys[' '] && player.hasBall && !player.shootingActive) {
+                player.shootingActive = true;
+                player.shootingPower = 0;
+            }
+
+            if (player.shootingActive) {
+                player.shootingPower += 2;
+                if (player.shootingPower > 100) player.shootingPower = 100;
+                if (!keys[' ']) {
+                    shootBall(player.shootingPower);
+                    player.shootingActive = false;
+                    player.shootingPower = 0;
+                }
+            }
+
+            // Physics
+            player.x += player.velocityX;
+            player.y += player.velocityY;
+            player.velocityY += 0.5; // gravity
+
+            if (player.y + player.height >= canvas.height - 10) {
+                player.y = canvas.height - player.height - 10;
+                player.velocityY = 0;
+                player.isJumping = false;
+            }
+
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+            // AI behavior
+            aiPlayers.forEach(ai => {
+                let targetX;
+                if (possession === 'ai') {
+                    targetX = aiBasket.x + aiBasket.width / 2;
+                } else {
+                    targetX = player.x + player.width / 2;
+                }
+
+                if (ai.x < targetX - 50) ai.velocityX = ai.speed;
+                else if (ai.x > targetX + 50) ai.velocityX = -ai.speed;
+                else ai.velocityX *= 0.7;
+
+                ai.x += ai.velocityX;
+                ai.y += ai.velocityY;
+                ai.velocityY += 0.5;
+
+                if (ai.y + ai.height >= canvas.height - 10) {
+                    ai.y = canvas.height - ai.height - 10;
+                    ai.velocityY = 0;
+                    ai.isJumping = false;
+                }
+
+                if (ai.x < 0) ai.x = 0;
+                if (ai.x + ai.width > canvas.width) ai.x = canvas.width - ai.width;
+            });
+
+            // AI shooting
+            if (possession === 'ai') {
+                const aiWithBall = aiPlayers.find(ai => ai.hasBall);
+                if (aiWithBall && Math.random() < 0.01) {
+                    const power = 30 + Math.random() * 40;
+                    shootBallAI(aiWithBall, power);
+                    aiWithBall.hasBall = false;
+                    possession = 'player';
+                }
+            }
+
+            // Ball physics
+            if (ball.inPlay) {
+                ball.x += ball.velocityX;
+                ball.y += ball.velocityY;
+                ball.velocityX *= ball.friction;
+                ball.velocityY += ball.gravity;
+                ball.velocityY *= ball.friction;
+
+                // Ball bounds
+                if (ball.x - ball.radius < 0) {
+                    ball.x = ball.radius;
+                    ball.velocityX = Math.abs(ball.velocityX) * 0.8;
+                }
+                if (ball.x + ball.radius > canvas.width) {
+                    ball.x = canvas.width - ball.radius;
+                    ball.velocityX = -Math.abs(ball.velocityX) * 0.8;
+                }
+                if (ball.y - ball.radius < 0) {
+                    ball.y = ball.radius;
+                    ball.velocityY = Math.abs(ball.velocityY) * 0.8;
+                }
+                if (ball.y + ball.radius > canvas.height - 10) {
+                    ball.y = canvas.height - ball.radius - 10;
+                    ball.velocityY = 0;
+                    ball.velocityX *= 0.95;
+                }
+
+                // Check basket collisions
+                checkBasketCollision();
+
+                // Check player catching
+                if (!player.hasBall && !possession === 'ai') {
+                    if (circleRectCollision(ball, player)) {
+                        player.hasBall = true;
+                        ball.inPlay = false;
+                        ball.x = player.x + player.width / 2;
+                        ball.y = player.y - 20;
+                        possession = 'player';
+                    }
+                }
+
+                // Check AI catching
+                aiPlayers.forEach(ai => {
+                    if (circleRectCollision(ball, ai)) {
+                        ai.hasBall = true;
+                        ball.inPlay = false;
+                        ball.x = ai.x + ai.width / 2;
+                        ball.y = ai.y - 20;
+                        possession = 'ai';
+                    }
+                });
+            }
+
+            updateUI();
+        }
+
+        function shootBall(power) {
+            player.hasBall = false;
+            ball.inPlay = true;
+            const angle = -Math.PI / 4;
+            const speed = (power / 100) * 15;
+            ball.velocityX = Math.cos(angle) * speed;
+            ball.velocityY = Math.sin(angle) * speed;
+            playerAttempts++;
+        }
+
+        function shootBallAI(ai, power) {
+            ai.hasBall = false;
+            ball.inPlay = true;
+            const angle = -Math.PI / 4 + (Math.random() - 0.5) * 0.5;
+            const speed = (power / 100) * 15;
+            ball.velocityX = -Math.cos(angle) * speed;
+            ball.velocityY = Math.sin(angle) * speed;
+            aiAttempts++;
+        }
+
+        function checkBasketCollision() {
+            // Player shooting at AI basket
+            if (ball.y < aiBasket.y + aiBasket.height &&
+                ball.y > aiBasket.y - 20 &&
+                ball.x > aiBasket.x &&
+                ball.x < aiBasket.x + aiBasket.width &&
+                Math.abs(ball.velocityY) < 3) {
+                playerScore += 2;
+                playerFG++;
+                resetBallToPlayer();
+            }
+
+            // AI shooting at player basket
+            if (ball.y < playerBasket.y + playerBasket.height &&
+                ball.y > playerBasket.y - 20 &&
+                ball.x > playerBasket.x &&
+                ball.x < playerBasket.x + playerBasket.width &&
+                Math.abs(ball.velocityY) < 3) {
+                aiScore += 2;
+                aiFG++;
+                resetBallToAI();
+            }
+        }
+
+        function resetBallToPlayer() {
+            ball.inPlay = false;
+            player.hasBall = true;
+            ball.x = player.x + player.width / 2;
+            ball.y = player.y - 20;
+            ball.velocityX = 0;
+            ball.velocityY = 0;
+            possession = 'player';
+        }
+
+        function resetBallToAI() {
+            ball.inPlay = false;
+            const randomAI = aiPlayers[Math.floor(Math.random() * aiPlayers.length)];
+            randomAI.hasBall = true;
+            ball.x = randomAI.x + randomAI.width / 2;
+            ball.y = randomAI.y - 20;
+            ball.velocityX = 0;
+            ball.velocityY = 0;
+            possession = 'ai';
+        }
+
+        function circleRectCollision(circle, rect) {
+            const closestX = Math.max(rect.x, Math.min(circle.x, rect.x + rect.width));
+            const closestY = Math.max(rect.y, Math.min(circle.y, rect.y + rect.height));
+            const dx = circle.x - closestX;
+            const dy = circle.y - closestY;
+            return dx * dx + dy * dy < circle.radius * circle.radius;
+        }
+
+        function updateUI() {
+            document.getElementById('playerScore').textContent = playerScore;
+            document.getElementById('playerFG').textContent = playerFG;
+            document.getElementById('playerAttempts').textContent = playerAttempts;
+            document.getElementById('playerPercent').textContent = playerAttempts > 0 ? Math.round((playerFG / playerAttempts) * 100) : 0;
+
+            document.getElementById('aiScore').textContent = aiScore;
+            document.getElementById('aiFG').textContent = aiFG;
+            document.getElementById('aiAttempts').textContent = aiAttempts;
+            document.getElementById('aiPercent').textContent = aiAttempts > 0 ? Math.round((aiFG / aiAttempts) * 100) : 0;
+
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timer').textContent = `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            const possessionEl = document.getElementById('possession');
+            if (possession === 'player') {
+                possessionEl.textContent = '👤 Your possession';
+                possessionEl.classList.remove('ai');
+            } else {
+                possessionEl.textContent = '🤖 AI possession';
+                possessionEl.classList.add('ai');
+            }
+        }
+
+        function endGame() {
+            gameRunning = false;
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('gameOver').style.display = 'block';
+
+            let winner, message;
+            if (playerScore > aiScore) {
+                winner = '🎉 YOU WIN! 🎉';
+                message = `You dominated the AI team!`;
+            } else if (aiScore > playerScore) {
+                winner = '😔 AI WINS!';
+                message = `The AI team was too strong. Try again!`;
+            } else {
+                winner = '🤝 TIED!';
+                message = `Great match! It was a tie!`;
+            }
+
+            document.getElementById('gameOverTitle').textContent = winner;
+            document.getElementById('gameOverMessage').textContent = message;
+            document.getElementById('finalPlayerScore').textContent = playerScore;
+            document.getElementById('finalAIScore').textContent = aiScore;
+        }
+
+        function draw() {
+            // Clear canvas
+            ctx.fillStyle = 'rgba(144, 238, 144, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Court lines
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Center circle
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2, 40, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Draw baskets
+            ctx.fillStyle = '#ff6b6b';
+            ctx.fillRect(playerBasket.x, playerBasket.y, playerBasket.width, playerBasket.height);
+            ctx.fillStyle = '#3498db';
+            ctx.fillRect(aiBasket.x, aiBasket.y, aiBasket.width, aiBasket.height);
+
+            // Basket hoops
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(playerBasket.x + playerBasket.width / 2, playerBasket.y + playerBasket.height, 10, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(aiBasket.x + aiBasket.width / 2, aiBasket.y + aiBasket.height, 10, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Draw player
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('YOU', player.x + player.width / 2, player.y + player.height + 15);
+
+            // Draw shooting power bar
+            if (player.shootingActive) {
+                ctx.fillStyle = '#ff6b6b';
+                ctx.fillRect(player.x - 15, player.y - 30, player.shootingPower / 2, 8);
+                ctx.strokeStyle = '#333';
+                ctx.strokeRect(player.x - 15, player.y - 30, 50, 8);
+            }
+
+            // Draw AI players
+            aiPlayers.forEach((ai, index) => {
+                ctx.fillStyle = ai.color;
+                ctx.fillRect(ai.x, ai.y, ai.width, ai.height);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`AI${index + 1}`, ai.x + ai.width / 2, ai.y + ai.height + 15);
+            });
+
+            // Draw ball
+            ctx.fillStyle = '#FFA500';
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Draw ball lines
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius - 2, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            if (gameRunning) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        // Initial draw
+        draw();
+    </script>
+</body>
+</html>
