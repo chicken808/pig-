@@ -1,0 +1,171 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 900px;
+    width: 100%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 2.5em;
+}
+
+.scoreboard {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.team {
+    text-align: center;
+    flex: 1;
+}
+
+.team.home {
+    color: #4169E1;
+}
+
+.team.away {
+    color: #FF8C00;
+}
+
+.team h2 {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+.score {
+    font-size: 3em;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.timer {
+    text-align: center;
+    flex: 1;
+}
+
+#gameTime {
+    font-size: 2.5em;
+    color: #333;
+    margin: 10px 0;
+}
+
+.btn-start, .btn-reset {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    font-size: 1em;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+    margin: 5px;
+}
+
+.btn-start:hover, .btn-reset:hover {
+    background: #218838;
+}
+
+.btn-reset {
+    background: #dc3545;
+}
+
+.btn-reset:hover {
+    background: #c82333;
+}
+
+#gameCanvas {
+    display: block;
+    margin: 20px auto;
+    background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 100%);
+    border: 3px solid #333;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+}
+
+.controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.team-controls {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.team-controls h3 {
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.team-controls:first-child h3 {
+    color: #4169E1;
+}
+
+.team-controls:last-child h3 {
+    color: #FF8C00;
+}
+
+.game-status {
+    text-align: center;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #28a745;
+    margin-top: 20px;
+    min-height: 30px;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 15px;
+    }
+    
+    h1 {
+        font-size: 1.8em;
+    }
+    
+    .scoreboard {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .controls {
+        grid-template-columns: 1fr;
+    }
+    
+    #gameCanvas {
+        max-width: 100%;
+    }
+}

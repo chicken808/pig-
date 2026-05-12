@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basketball Game - 2K Web Edition</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🏀 Basketball Game</h1>
+        <div class="scoreboard">
+            <div class="team home">
+                <h2>HOME</h2>
+                <div class="score" id="homeScore">0</div>
+                <p>FG: <span id="homeFG">0/0</span> (<span id="homeFGP">0%</span>)</p>
+            </div>
+            <div class="timer">
+                <h3 id="gameTime">5:00</h3>
+                <button id="startBtn" class="btn-start">Start Game</button>
+                <button id="resetBtn" class="btn-reset" style="display:none;">Reset</button>
+            </div>
+            <div class="team away">
+                <h2>AWAY</h2>
+                <div class="score" id="awayScore">0</div>
+                <p>FG: <span id="awayFG">0/0</span> (<span id="awayFGP">0%</span>)</p>
+            </div>
+        </div>
+        
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div class="controls">
+            <div class="team-controls">
+                <h3>🔵 HOME TEAM</h3>
+                <p>← → ↑ ↓ Move | SPACE Shoot</p>
+            </div>
+            <div class="team-controls">
+                <h3>🟠 AWAY TEAM</h3>
+                <p>A W D S Move | X Shoot</p>
+            </div>
+        </div>
+        
+        <div class="game-status" id="gameStatus"></div>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html>
